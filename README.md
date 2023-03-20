@@ -5,14 +5,16 @@ Support code for the DeepArUco model. Work by Rafael Berral-Soler, Rafael Muñoz
 Demo code along with pretrained models will be available soon. 
 Some example predictions:
 
-![Example 1](examples/output_1.png)
-![Example 2](examples/output_2.png)
-![Example 3](examples/output_3.png)
+<img src='examples/output_1.png' width='333'> <img src='examples/output_2.png' width='333'> <img src='examples/output_3.png' width='333'>
 
 ## Flying ArUco dataset
 This dataset will be available soon. 
 Some samples from the dataset:
 
+<img src='examples/flyingaruco_1.jpg' width='333'> <img src='examples/flyingaruco_2.jpg' width='333'> <img src='examples/flyingaruco_3.jpg' width='333'>
+
 ## Shadow ArUco dataset
 This dataset will be available soon. 
 Some samples from the dataset:
+
+<img src='examples/shadowaruco_1.png' width='333'> <img src='examples/shadowaruco_2.png' width='333'> <img src='examples/shadowaruco_3.png' width='333'>
