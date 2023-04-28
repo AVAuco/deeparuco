@@ -74,7 +74,7 @@ def refine_corners(corners):
 def decode_markers(markers):
     return marker_decoder(markers)
 
-with Pool(cpu_count() - 2) as pool:
+with Pool(max(1, cpu_count() - 2)) as pool:
 
     pic = cv2.imread(pic_path)
     detections = detector(pic, conf = 0.1, verbose = False)[0].boxes
