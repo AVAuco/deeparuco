@@ -103,47 +103,9 @@ with Pool(max(1, cpu_count() - 2)) as pool:
     decoded_bits = decode_markers(np.array(markers)).numpy()
     ids = pool.map(find_id, decoded_bits)
 
-    # Bbox only.
-
-    corners = [0,0,1,0,1,1,0,1]
-    pic_bbox = pic.copy()
-
-    for det in [[int(val) for val in det.xyxy.cpu().numpy()[0]] for det in detections]:
-
-        width = det[2] - det[0]
-        height = det[3] - det[1]
-
-        for i in range(0, 8, 2):
-            p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
-            i2 = (i + 2) % 8
-            p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
-            pic_bbox = cv2.line(pic_bbox, p1, p2, (0, 255, 0), line_width, cv2.LINE_AA)
-
-    cv2.imwrite("output_bbox.png", pic_bbox)
-
-    # Refined bbox. only.
-
-    pic_refined = pic.copy()
-
-    for corners, det, id in zip(refined_corners, xyxy, ids):
-
-        color = (0, 255, 0)
-            
-        width = det[2] - det[0]
-        height = det[3] - det[1]
-
-        for i in range(0, 8, 2):
-            p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
-            i2 = (i + 2) % 8
-            p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
-            pic_refined = cv2.line(pic_refined, p1, p2, color, line_width, cv2.LINE_AA)
-
-    cv2.imwrite("output_refined.png", pic_refined)
-
     # Visualize
 
-    thresh = 8
-    pic = 2.0 * pic
+    thresh = 2
 
     for corners, det, id in zip(refined_corners, xyxy, ids):
 
