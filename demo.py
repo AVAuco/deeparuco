@@ -105,7 +105,7 @@ with Pool(max(1, cpu_count() - 2)) as pool:
 
     # Visualize
 
-    thresh = 2
+    thresh = 4
 
     for corners, det, id in zip(refined_corners, xyxy, ids):
 
