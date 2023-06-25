@@ -3,6 +3,12 @@ Support code for the DeepArUco model. Work by Rafael Berral-Soler, Rafael Muñoz
 
 **NEW (25/06/2023)**: Try our method in this Google Colab notebook. [Link](https://colab.research.google.com/drive/1kR9BYXs9g6N45F-cDiMZ48aR_uxzdEcl?usp=sharing)
 
+To detect markers locally use the demo.py script:
+
+```
+python demo.py <path to image>
+```
+
 ## Pretrained models
 Demo code along with pretrained models will be available soon. 
 Some example predictions:
