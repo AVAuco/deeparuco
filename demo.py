@@ -66,6 +66,8 @@ corner_regressor.trainable = False
 marker_decoder = load_model(decoder_path)
 marker_decoder.trainable = False
 
+line_width = 2
+
 @tf.function
 def refine_corners(corners):
     return corner_regressor(corners)
@@ -77,7 +79,7 @@ def decode_markers(markers):
 with Pool(max(1, cpu_count() - 2)) as pool:
 
     pic = cv2.imread(pic_path)
-    detections = detector(pic, conf = 0.1, verbose = False)[0].boxes
+    detections = detector(pic, conf = 0.03, verbose = False)[0].boxes
     if not detections:
         print('No markers found.')
         quit()
@@ -101,28 +103,65 @@ with Pool(max(1, cpu_count() - 2)) as pool:
     decoded_bits = decode_markers(np.array(markers)).numpy()
     ids = pool.map(find_id, decoded_bits)
 
-    # Visualize
+    # Bbox only.
 
-    thresh = 8
+    corners = [0,0,1,0,1,1,0,1]
+    pic_bbox = pic.copy()
+
+    for det in [[int(val) for val in det.xyxy.cpu().numpy()[0]] for det in detections]:
+
+        width = det[2] - det[0]
+        height = det[3] - det[1]
+
+        for i in range(0, 8, 2):
+            p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
+            i2 = (i + 2) % 8
+            p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
+            pic_bbox = cv2.line(pic_bbox, p1, p2, (0, 255, 0), line_width, cv2.LINE_AA)
+
+    cv2.imwrite("output_bbox.png", pic_bbox)
+
+    # Refined bbox. only.
+
+    pic_refined = pic.copy()
 
     for corners, det, id in zip(refined_corners, xyxy, ids):
 
-        if id[1] < thresh:
-            width = det[2] - det[0]
-            height = det[3] - det[1]
+        color = (0, 255, 0)
+            
+        width = det[2] - det[0]
+        height = det[3] - det[1]
 
-            for i in range(0, 8, 2):
-                p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
-                i2 = (i + 2) % 8
-                p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
-                pic = cv2.line(pic, p1, p2, (0, 255, 0), 1, cv2.LINE_AA)
+        for i in range(0, 8, 2):
+            p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
+            i2 = (i + 2) % 8
+            p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
+            pic_refined = cv2.line(pic_refined, p1, p2, color, line_width, cv2.LINE_AA)
 
-            #if id[1] > thresh:
-            #    color = (0, 0, 255)
-            #else:
-                color = (0, 255, 0)
+    cv2.imwrite("output_refined.png", pic_refined)
 
-            pic = cv2.putText(pic, str(id[0]), (det[0] + int(width / 2) - 15, det[1] + int(height / 2) + 5), 
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+    # Visualize
+
+    thresh = 8
+    pic = 2.0 * pic
+
+    for corners, det, id in zip(refined_corners, xyxy, ids):
+
+        color = (0, 255, 0)
+
+        if id[1] >= thresh:
+            color = (0, 0, 255)
+
+        width = det[2] - det[0]
+        height = det[3] - det[1]
+
+        for i in range(0, 8, 2):
+            p1 = (int(det[0] + corners[i] * width), int(det[1] + corners[i + 1] * height))
+            i2 = (i + 2) % 8
+            p2 = (int(det[0] + corners[i2] * width), int(det[1] + corners[i2 + 1] * height))
+            pic = cv2.line(pic, p1, p2, color, line_width, cv2.LINE_AA)
+
+        pic = cv2.putText(pic, str(id[0]), (det[0] + int(width / 2) - 20, det[1] + int(height / 2) + 5), 
+        cv2.FONT_HERSHEY_SIMPLEX, 0.75, color, line_width, cv2.LINE_AA)
 
     cv2.imwrite("output.png", pic)
