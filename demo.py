@@ -112,10 +112,7 @@ with Pool(max(1, cpu_count() - 2)) as pool:
         color = (0, 255, 0)
 
         if id[1] >= thresh:
-            if 'google.colab' in str(get_ipython()):
-                color = (255, 0, 0)
-            else:
-                color = (0, 0, 255)
+            color = (0, 0, 255)
 
         width = det[2] - det[0]
         height = det[3] - det[1]
