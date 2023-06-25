@@ -150,7 +150,7 @@ with Pool(max(1, cpu_count() - 2)) as pool:
         color = (0, 255, 0)
 
         if id[1] >= thresh:
-            color = (0, 0, 255)
+            color = (255, 0, 0)
 
         width = det[2] - det[0]
         height = det[3] - det[1]
