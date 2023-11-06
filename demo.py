@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     decoder_out = np.round(decode_markers(np.array(markers)).numpy())
 
-    with Pool(min(1, cpu_count() - 2)) as pool:
+    with Pool(max(1, cpu_count() - 2)) as pool:
         ids, dists = zip(*[out for out in pool.map(find_id, decoder_out)])
 
     # Visualize
