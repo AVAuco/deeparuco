@@ -30,8 +30,8 @@ Some samples from the dataset:
 ## Citation
 If you find our work helpful for your research, please cite our publications:
 ```
-@InProceedings{10.1007/978-3-031-36616-1_16,
-  author="Berral-Soler, Rafael
+@InProceedings{berral2023ibpria,
+  author = "Berral-Soler, Rafael
   and Mu{\~{n}}oz-Salinas, Rafael
   and Medina-Carnicer, Rafael
   and Mar{\'i}n-Jim{\'e}nez, Manuel J.",
@@ -39,13 +39,12 @@ If you find our work helpful for your research, please cite our publications:
   and Gallego, Antonio Javier
   and S{\'a}nchez, Joan Andreu
   and Domingues, In{\^e}s",
-  title="DeepArUco: Marker Detection and Classification in Challenging Lighting Conditions",
-  booktitle="Pattern Recognition and Image Analysis",
-  year="2023",
-  publisher="Springer Nature Switzerland",
-  address="Cham",
-  pages="199--210",
-  abstract="Detection of fiducial markers in challenging lighting conditions can be useful in fields such as industry, medicine, or any other setting in which lighting cannot be controlled (e.g., outdoor environments or indoors with poor lighting). However, explicitly dealing with such conditions has not been done before. Hence, we propose DeepArUco, a deep learning-based framework that aims to detect ArUco markers in lighting conditions where the classical ArUco implementation fails. The system is built around Convolutional Neural Networks, performing the job of detecting and decoding ArUco markers. A method to generate synthetic data to train the networks is also proposed. Furthermore, a real-life dataset of ArUco markers in challenging lighting conditions is introduced and used to evaluate our system, which will be made publicly available alongside the implementation.",
-  isbn="978-3-031-36616-1"
+  title = "DeepArUco: Marker Detection and Classification in Challenging Lighting Conditions",
+  booktitle = "Iberian Conference on Pattern Recognition and Image Analysis",
+  doi = {10.1007/978-3-031-36616-1_16},
+  year = "2023",
+  publisher = "Springer Nature Switzerland",
+  pages = "199--210",
+  isbn = "978-3-031-36616-1"
 }
 ```
