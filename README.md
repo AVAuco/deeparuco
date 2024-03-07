@@ -1,6 +1,7 @@
 # DeepArUco++: improved detection of square fiducial markers in challenging lighting conditions
 Support code for the DeepArUco++ method. Work by Rafael Berral-Soler, Rafael Muñoz-Salinas, Rafael Medina-Carnicer and Manuel J. Marín-Jiménez.
 
+**NEW (07/03/2024)**: Shadow-ArUco dataset available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10791293.svg)](https://doi.org/10.5281/zenodo.10791293)  
 **NEW (06/11/2023)**: Try our method in this Google Colab notebook. Updated to DeepArUco++! [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1kR9BYXs9g6N45F-cDiMZ48aR_uxzdEcl?usp=sharing)
 
 To detect markers locally use the demo.py script:
