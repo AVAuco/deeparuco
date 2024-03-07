@@ -16,13 +16,13 @@ Some example predictions:
 
 <img src='examples/output_1.png' width='333'> <img src='examples/output_2.png' width='333'> <img src='examples/output_3.png' width='333'>
 
-## Flying ArUco dataset
+## Flying-ArUco v2 dataset
 This dataset will be available soon. 
 Some samples from the dataset:
 
 <img src='examples/flyingaruco_1.jpg' width='333'> <img src='examples/flyingaruco_2.jpg' width='333'> <img src='examples/flyingaruco_3.jpg' width='333'>
 
-## Shadow ArUco dataset
+## Shadow-ArUco dataset
 Dataset available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10791293.svg)](https://doi.org/10.5281/zenodo.10791293)  
 Some samples from the dataset:
 
