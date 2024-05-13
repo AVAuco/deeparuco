@@ -1,6 +1,4 @@
 from argparse import ArgumentParser
-from multiprocessing import cpu_count
-from multiprocessing.pool import Pool
 
 import cv2
 import numpy as np
@@ -175,9 +173,7 @@ if __name__ == "__main__":
     # Get ids from markers
 
     decoder_out = np.round(decode_markers(np.array(markers)).numpy())
-
-    with Pool(max(1, cpu_count() - 2)) as pool:
-        ids, dists = zip(*[out for out in pool.map(find_id, decoder_out)])
+    ids, dists = zip(*[find_id(out) for out in decoder_out])
 
     # Visualize
 
