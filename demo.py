@@ -56,7 +56,7 @@ if __name__ == "__main__":
         f"{model_dir}/{args.regressor}.h5",
         custom_objects={"weighted_loss": weighted_loss},
     )
-    decoder = load_model(f"{model_dir}/decoder.h5")
+    decoder = load_model(f"{model_dir}/dec_new.h5")
 
     # Use graph execution for tf models
 
