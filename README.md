@@ -14,19 +14,25 @@ python demo.py <path to image> <output path>
 Demo code along with pretrained models will be available soon. 
 Some example predictions:
 
+<p align = "center">
 <img src='examples/output_1.png' width='333'> <img src='examples/output_2.png' width='333'> <img src='examples/output_3.png' width='333'>
+</p>
 
 ## Flying-ArUco v2 dataset
 This dataset will be available soon. 
 Some samples from the dataset:
 
+<p align = "center">
 <img src='examples/flyingaruco_1.jpg' width='333'> <img src='examples/flyingaruco_2.jpg' width='333'> <img src='examples/flyingaruco_3.jpg' width='333'>
+</p>
 
 ## Shadow-ArUco dataset
 Dataset available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10791293.svg)](https://doi.org/10.5281/zenodo.10791293)  
 Some samples from the dataset:
 
+<p align = "center">
 <img src='examples/shadowaruco_1.png' width='333'> <img src='examples/shadowaruco_2.png' width='333'> <img src='examples/shadowaruco_3.png' width='333'>
+</p>
 
 ## Citation
 If you find our work helpful for your research, please cite our publications:
