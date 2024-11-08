@@ -1,11 +1,12 @@
+import numpy as np
+import cv2
 import warnings
 
-import cv2
-import numpy as np
 from shapely.geometry import Polygon
 
 
 def ordered_corners(x_vals, y_vals):
+
     cx, cy = np.mean(x_vals), np.mean(y_vals)
     angles = np.arctan2(x_vals - cx, y_vals - cy)
     indices = np.argsort(angles)
@@ -63,54 +64,68 @@ def IoU(a, b):
         return 0
 
 
-def match_rois(gt_markers, pred_markers):
-    pred_unmatched = pred_markers.copy()
-    pred_matched = [None] * len(gt_markers)
+def match_rois(gt_markers, pred_markers, min_iou=0.5):
 
-    max_iou = [0.0] * len(gt_markers)
+    match = [None] * len(gt_markers)
+    match_iou = [0.0] * len(gt_markers)
 
-    while pred_unmatched:
-        pred = pred_unmatched.pop()
-        ious = [IoU(pred, gt) for gt in gt_markers]
+    # Get pref. match for each gt marker.
 
-        for match in np.argsort(ious)[::-1]:
-            if ious[match] > 0.5 and ious[match] > max_iou[match]:
-                max_iou[match] = ious[match]
+    for i in range(len(gt_markers)):
+        ious = [IoU(pred, gt_markers[i]) for pred in pred_markers]
+        idx = np.argmax(ious)
+        if ious[idx] > min_iou:
+            match[i] = idx
+            match_iou[i] = ious[idx]
 
-                if pred_matched[match] != None:
-                    pred_unmatched.append(pred_matched[match])
+    # Delete duplicates
+    
+    for i in range(len(match)):
+        if match[i] != None:
+            dupes = np.where(match == match[i])[0]
+        else:
+            continue
+        
+        if len(dupes) > 1:
+            best_dupe = dupes[np.argmax([match_iou[d] for d in dupes])]
+            for d in dupes:
+                if d != best_dupe:
+                    match[d] = None
 
-                pred_matched[match] = pred
-                break
+    # Return non-null matches
 
-    assert len(pred_markers) >= len([m for m in pred_matched if m != None])
+    return [pred_markers[idx] if idx != None else None for idx in match]
 
-    return pred_matched
+dist = lambda a, b: ((a['x'] - b['x']) ** 2 + (a['y'] - b['y']) ** 2) ** (1 / 2)
 
+def match_corners(gt_corners, pred_corners, max_dist=5):
 
-dist = lambda a, b: ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** (1 / 2)
+    match = [None] * 4
+    match_distance = [float('inf')] * 4
 
+    # Get pref. match for each gt corner.
 
-def match_corners(gt_corners, pred_corners):
-    pred_unmatched = pred_corners.copy()
-    pred_matched = [None] * 4
+    for i in range(4):
+        dists = [dist(pred, gt_corners[i]) for pred in pred_corners]
+        idx = np.argmin(dists)
+        if dists[idx] < max_dist:
+            match[i] = idx
+            match_distance[i] = dists[idx]
 
-    distance = [float("inf")] * 4
+    # Delete duplicates
+    
+    for i in range(len(match)):
+        if match[i] != None:
+            dupes = np.where(match == match[i])[0]
+        else:
+            continue
+        
+        if len(dupes) > 1:
+            best_dupe = dupes[np.argmin([match_distance[d] for d in dupes])]
+            for d in dupes:
+                if d != best_dupe:
+                    match[d] = None
 
-    while pred_unmatched:
-        pred = pred_unmatched.pop()
-        dists = [dist((gt["x"], gt["y"]), (pred["x"], pred["y"])) for gt in gt_corners]
+    # Return non-null matches
 
-        for match in np.argsort(dists):
-            if dists[match] < distance[match]:
-                distance[match] = dists[match]
-
-                if pred_matched[match] != None:
-                    pred_unmatched.append(pred_matched[match])
-
-                pred_matched[match] = pred
-                break
-
-    assert len(pred_corners) == len([c for c in pred_matched if c != None])
-
-    return pred_matched
+    return [pred_corners[idx] if idx != None else None for idx in match]

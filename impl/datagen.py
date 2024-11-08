@@ -2,59 +2,56 @@
 
 from math import ceil
 from random import randint, random, shuffle, uniform
+from time import sleep
 
 import cv2
 import numpy as np
 from tensorflow.keras.utils import Sequence
 from tqdm import tqdm
 
+from .utils import ordered_corners, marker_from_corners
+from .heatmaps import pos_to_heatmap, visualize_hmaps
+from .shadows import gradient, lines, circular, perlin
 from .aruco import id_to_bits
-from .heatmaps import pos_to_heatmap
-from .shadows import circular, gradient, lines, perlin
-from .utils import marker_from_corners, ordered_corners
 
 rot_codes = [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_180, cv2.ROTATE_90_COUNTERCLOCKWISE]
 
-
 def hflip(pic, corners):
     flipped = corners.copy()
-    flipped[[0, 2, 4, 6]] = 1 - flipped[[0, 2, 4, 6]]
+    flipped[[0,2,4,6]] = 1 - flipped[[0,2,4,6]]
 
-    x = flipped[[0, 2, 4, 6]]
-    y = flipped[[1, 3, 5, 7]]
+    x = flipped[[0,2,4,6]]
+    y = flipped[[1,3,5,7]]
 
-    return cv2.flip(pic, 1), np.array(ordered_corners(x, y))
-
+    return cv2.flip(pic, 1), np.array(ordered_corners(x, y)) #np.array(flipped[[2,3,0,1,6,7,4,5]])
 
 def vflip(pic, corners):
     flipped = corners.copy()
-    flipped[[1, 3, 5, 7]] = 1 - flipped[[1, 3, 5, 7]]
+    flipped[[1,3,5,7]] = 1 - flipped[[1,3,5,7]]
 
-    x = flipped[[0, 2, 4, 6]]
-    y = flipped[[1, 3, 5, 7]]
+    x = flipped[[0,2,4,6]]
+    y = flipped[[1,3,5,7]]
 
-    return cv2.flip(pic, 0), np.array(ordered_corners(x, y))
-
+    return cv2.flip(pic, 0), np.array(ordered_corners(x, y)) #np.array(flipped[[6,7,4,5,2,3,0,1]])
 
 def rotate_corners(pic, corners, n):
     aux = corners.copy()
     rotated = np.zeros(8)
 
     for i in range(n):
-        rotated[[0, 2, 4, 6]] = 1 - aux[[1, 3, 5, 7]]
-        rotated[[1, 3, 5, 7]] = aux[[0, 2, 4, 6]]
+        rotated[[0,2,4,6]] = 1 - aux[[1,3,5,7]]
+        rotated[[1,3,5,7]] = aux[[0,2,4,6]]
         aux = rotated.copy()
 
-    x = rotated[[0, 2, 4, 6]]
-    y = rotated[[1, 3, 5, 7]]
+    x = rotated[[0,2,4,6]]
+    y = rotated[[1,3,5,7]]
 
-    return cv2.rotate(pic, rot_codes[n - 1]), np.array(ordered_corners(x, y))
-
+    return cv2.rotate(pic, rot_codes[n - 1]), np.array(ordered_corners(x, y)) #rotated[[6,7,0,1,2,3,4,5]]
 
 class corner_gen(Sequence):
-    def __init__(
-        self, img_dataframe, source_dir, batch_size, augment=False, normalize=False
-    ):
+
+    def __init__(self, img_dataframe, source_dir, batch_size, augment = False, normalize = False):
+
         self.batch_size = batch_size
         self.augment = augment
         self.normalize = normalize
@@ -64,21 +61,11 @@ class corner_gen(Sequence):
 
         self.lpattern_cache = []
 
-        print("Loading data...")
+        print('Loading data...')
         for _, row in tqdm(img_dataframe.iterrows(), total=img_dataframe.shape[0]):
-            crop = cv2.imread(source_dir + "/" + row["pic"])
-            corners = np.array(
-                [
-                    row["c1_x"],
-                    row["c1_y"],
-                    row["c2_x"],
-                    row["c2_y"],
-                    row["c3_x"],
-                    row["c3_y"],
-                    row["c4_x"],
-                    row["c4_y"],
-                ]
-            )
+            
+            crop = cv2.imread(source_dir + '/' + row['pic'])
+            corners = np.array([row['c1_x'], row['c1_y'], row['c2_x'], row['c2_y'], row['c3_x'], row['c3_y'], row['c4_x'], row['c4_y']])
 
             if self.normalize == True:
                 crop = (crop - np.min(crop)) / (np.max(crop) - np.min(crop) + 1e-9)
@@ -93,6 +80,7 @@ class corner_gen(Sequence):
         self.length = ceil(len(self.crops) / self.batch_size)
 
     def __data_generation(self):
+
         crops = []
         labels = []
 
@@ -101,15 +89,16 @@ class corner_gen(Sequence):
             corners = self.labels[i % self.length]
 
             if self.augment == True:
+
                 # Rotation, flip
 
                 rotate = randint(0, 3)
                 if rotate != 0:
                     crop, corners = rotate_corners(crop, corners, rotate)
-
+                
                 if random() >= 0.5:
                     crop, corners = hflip(crop, corners)
-
+                
                 if random() >= 0.5:
                     crop, corners = vflip(crop, corners)
 
@@ -123,12 +112,9 @@ class corner_gen(Sequence):
                         shadows = gradient(width, height)
 
                         for f in [lines, perlin, circular]:
-                            if random() > 0.5:
-                                shadows *= f(width, height)
+                            if random() > 0.5: shadows *= f(width, height)
 
-                        shadows = (shadows - np.min(shadows)) / (
-                            np.max(shadows) - np.min(shadows) + 1e-6
-                        ) * (gmax - gmin) + gmin
+                        shadows = (shadows - np.min(shadows)) / (np.max(shadows) - np.min(shadows) + 1e-6) * (gmax - gmin) + gmin
                         self.lpattern_cache.append(shadows)
                     else:
                         shadows = self.lpattern_cache[p_num - 1]
@@ -151,11 +137,10 @@ class corner_gen(Sequence):
     def on_epoch_end(self):
         self.iterator = 0
 
-
 class hmap_gen(Sequence):
-    def __init__(
-        self, img_dataframe, source_dir, batch_size, normalize=False, augment=False
-    ):
+
+    def __init__(self, img_dataframe, source_dir, batch_size, normalize = False, augment = False):
+
         self.batch_size = batch_size
         self.augment = augment
         self.normalize = normalize
@@ -165,22 +150,13 @@ class hmap_gen(Sequence):
 
         self.lpattern_cache = []
 
-        print("Loading data...")
+        print('Loading data...')
         for _, row in tqdm(img_dataframe.iterrows(), total=img_dataframe.shape[0]):
-            crop = cv2.imread(source_dir + "/" + row["pic"])
+            
+            crop = cv2.imread(source_dir + '/' + row['pic'])
 
-            corners_x = [
-                row["c1_x"] * 63,
-                row["c2_x"] * 63,
-                row["c3_x"] * 63,
-                row["c4_x"] * 63,
-            ]
-            corners_y = [
-                row["c1_y"] * 63,
-                row["c2_y"] * 63,
-                row["c3_y"] * 63,
-                row["c4_y"] * 63,
-            ]
+            corners_x = [row['c1_x'] * 63, row['c2_x'] * 63, row['c3_x'] * 63, row['c4_x'] * 63]
+            corners_y = [row['c1_y'] * 63, row['c2_y'] * 63, row['c3_y'] * 63, row['c4_y'] * 63]
 
             hmaps = pos_to_heatmap(corners_x, corners_y, 64)
             hmaps = np.sum(hmaps, -1)
@@ -199,6 +175,7 @@ class hmap_gen(Sequence):
         self.length = ceil(len(self.crops) / self.batch_size)
 
     def __data_generation(self):
+
         crops = []
         labels = []
 
@@ -207,17 +184,18 @@ class hmap_gen(Sequence):
             hmaps = self.labels[i % self.length]
 
             if self.augment == True:
+
                 # Rotation, flip
 
                 rotate = randint(0, 3)
                 if rotate != 0:
                     crop = np.rot90(crop, rotate)
                     hmaps = np.rot90(hmaps, rotate)
-
+                
                 if random() >= 0.5:
                     crop = np.fliplr(crop)
                     hmaps = np.fliplr(hmaps)
-
+                
                 if random() >= 0.5:
                     crop = np.flipud(crop)
                     hmaps = np.flipud(hmaps)
@@ -234,18 +212,15 @@ class hmap_gen(Sequence):
                         shadows = gradient(width, height)
 
                         for f in [lines, perlin, circular]:
-                            if random() > 0.5:
-                                shadows *= f(width, height)
+                            if random() > 0.5: shadows *= f(width, height)
 
-                        shadows = (shadows - np.min(shadows)) / (
-                            np.max(shadows) - np.min(shadows) + 1e-6
-                        ) * (gmax - gmin) + gmin
+                        shadows = (shadows - np.min(shadows)) / (np.max(shadows) - np.min(shadows) + 1e-6) * (gmax - gmin) + gmin
                         self.lpattern_cache.append(shadows)
                     else:
                         shadows = self.lpattern_cache[p_num - 1]
 
                     crop = np.clip(np.multiply(crop, np.expand_dims(shadows, -1)), 0, 1)
-
+                    
             crops.append(crop)
             labels.append(hmaps)
 
@@ -263,14 +238,12 @@ class hmap_gen(Sequence):
     def on_epoch_end(self):
         self.iterator = 0
 
-
 perturbate = lambda val: min(max(val + random() * 0.1 - 0.05, 0.0), 1.0)
 
-
 class decoder_gen(Sequence):
-    def __init__(
-        self, img_dataframe, source_dir, batch_size, augment=True, normalize=False
-    ):
+
+    def __init__(self, img_dataframe, source_dir, batch_size, augment = True, normalize = False):
+
         self.batch_size = batch_size
         self.normalize = normalize
         self.augment = augment
@@ -282,35 +255,25 @@ class decoder_gen(Sequence):
 
         self.lpattern_cache = []
 
-        print("Loading data...")
+        print('Loading data...')
 
         for _, row in tqdm(img_dataframe.iterrows(), total=img_dataframe.shape[0]):
-            crop = cv2.imread(source_dir + "/" + row["pic"])
+            
+            crop = cv2.imread(source_dir + '/' + row['pic'])
             crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
 
             if self.normalize == True:
                 crop = (crop - np.min(crop)) / (np.max(crop) - np.min(crop) + 1e-9)
 
-            corners = np.array(
-                [
-                    row["c1_x"],
-                    row["c1_y"],
-                    row["c2_x"],
-                    row["c2_y"],
-                    row["c3_x"],
-                    row["c3_y"],
-                    row["c4_x"],
-                    row["c4_y"],
-                ]
-            )
-            corners = ordered_corners(corners[[0, 2, 4, 6]], corners[[1, 3, 5, 7]])
+            corners = np.array([row['c1_x'], row['c1_y'], row['c2_x'], row['c2_y'], row['c3_x'], row['c3_y'], row['c4_x'], row['c4_y']])
+            corners = ordered_corners(corners[[0,2,4,6]], corners[[1,3,5,7]])
 
-            bits = np.array(id_to_bits(row["id"])).reshape((6, 6))
+            bits = np.array(id_to_bits(row['id'])).reshape((6, 6))
 
             self.crops.append(crop)
             self.corners.append(corners)
             self.labels.append(bits)
-            self.orientations.append(row["rot"])
+            self.orientations.append(row['rot'])
 
         temp = list(zip(self.crops, self.corners, self.labels, self.orientations))
         shuffle(temp)
@@ -319,6 +282,7 @@ class decoder_gen(Sequence):
         self.length = ceil(len(self.crops) / self.batch_size)
 
     def __data_generation(self):
+
         markers = []
         labels = []
 
@@ -337,7 +301,11 @@ class decoder_gen(Sequence):
             if orientation != 0:
                 marker = cv2.rotate(marker, rot_codes[orientation - 1])
 
-            if self.augment == True:
+            #cv2.imwrite('crop.png', marker * 255.0)
+            #cv2.imwrite('bits.png', bits * 255.0)
+            #input('Waiting...') 
+
+            if self.augment == True:                
                 rotate = randint(0, 3)
                 if rotate != 0:
                     marker = cv2.rotate(marker, rot_codes[rotate - 1])
@@ -363,16 +331,14 @@ class decoder_gen(Sequence):
                         shadows = gradient(width, height)
 
                         for f in [lines, perlin, circular]:
-                            if random() > 0.5:
-                                shadows *= f(width, height)
+                            if random() > 0.5: shadows *= f(width, height)
 
-                        shadows = (shadows - np.min(shadows)) / (
-                            np.max(shadows) - np.min(shadows) + 1e-6
-                        ) * (gmax - gmin) + gmin
+                        shadows = (shadows - np.min(shadows)) / (np.max(shadows) - np.min(shadows) + 1e-6) * (gmax - gmin) + gmin
                         self.lpattern_cache.append(shadows)
                     else:
                         shadows = self.lpattern_cache[p_num - 1]
 
+                    #marker = np.clip(np.multiply(marker, np.expand_dims(shadows, -1)), 0, 1)
                     marker = np.clip(np.multiply(marker, shadows), 0, 1)
 
             markers.append(marker)

@@ -3,39 +3,36 @@ import random as rn
 from argparse import ArgumentParser
 from os import mkdir
 from os.path import exists
+from shutil import rmtree
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.callbacks import CSVLogger, EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import (CSVLogger, EarlyStopping,
+                                        ReduceLROnPlateau)
 
 seed = 0
-os.environ["PYTHONHASHSEED"] = "0"
+os.environ['PYTHONHASHSEED'] = '0'
 
 np.random.seed(seed)
 rn.seed(seed)
 tf.random.set_seed(seed)
 
+gpu = tf.config.experimental.list_physical_devices('GPU')[0]
+tf.config.experimental.set_memory_growth(gpu, True)
+tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6144)])
+
 from impl.architectures import regressor_hmaps_unet, regressor_mobilenet
-from impl.datagen import corner_gen, hmap_gen
+from impl.datagen import hmap_gen, corner_gen
 from impl.losses import weighted_loss
 
-if __name__ == "__main__":
-    parser = ArgumentParser(description="DeepArUco v2 corner regression model trainer.")
-    parser.add_argument("source_dir", help="where to find source images")
-    parser.add_argument("run_name", help="where to store the resulting model")
-    parser.add_argument(
-        "-m",
-        "--hmaps",
-        help="whether to train on hmaps or coords.",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-f",
-        "--filters",
-        help="number of filters in the first conv. layer (heatmap-based only)",
-        default=8,
-    )
+if __name__ == '__main__':
+
+    parser = ArgumentParser(description = 'DeepArUco v2 corner regression model trainer.')
+    parser.add_argument('source_dir', help = 'where to find source images')
+    parser.add_argument('run_name', help = 'where to store the resulting model')
+    parser.add_argument('-m', '--hmaps', help = 'whether to train on hmaps or coords.', action = 'store_true')
+    parser.add_argument('-f', '--filters', help = 'number of filters in the first conv. layer', default = 8)
     args = parser.parse_args()
 
     # Control paramters
@@ -55,17 +52,17 @@ if __name__ == "__main__":
     model.summary()
 
     if args.hmaps == True:
-        model.compile(loss=weighted_loss, optimizer="adam")
+        model.compile(loss = weighted_loss, optimizer = 'adam')
     else:
-        model.compile(loss="mae", optimizer="adam")
+        model.compile(loss = 'mae', optimizer = 'adam')
 
     # Load dataset
 
-    train_csv = args.source_dir + "/train.csv"
-    train_df = pd.read_csv(train_csv)
+    train_csv = args.source_dir + '/train.csv'
+    train_df = pd.read_csv(train_csv)#[:2000]
 
-    valid_csv = args.source_dir + "/valid.csv"
-    valid_df = pd.read_csv(valid_csv)
+    valid_csv = args.source_dir + '/valid.csv'
+    valid_df = pd.read_csv(valid_csv)#[:500]
 
     if args.hmaps == True:
         train_generator = hmap_gen(train_df, args.source_dir, batch_size, True, True)
@@ -73,33 +70,20 @@ if __name__ == "__main__":
     else:
         train_generator = corner_gen(train_df, args.source_dir, batch_size, True, True)
         valid_generator = corner_gen(valid_df, args.source_dir, batch_size, True, True)
-
+                                        
     # Callbacks
 
-    stop = EarlyStopping(
-        monitor="val_loss",
-        patience=patience,
-        verbose=True,
-        restore_best_weights=True,
-        min_delta=1e-4,
-    )
-    reduce_lr = ReduceLROnPlateau(monitor="val_loss", patience=reduce_after, factor=0.5)
+    stop = EarlyStopping(monitor = 'val_loss', patience = patience, verbose = True, restore_best_weights = True, min_delta = 1e-4)
+    reduce_lr = ReduceLROnPlateau(monitor = 'val_loss', patience = reduce_after, factor = 0.5)
 
     # Training
 
-    if not exists("./models"):
-        mkdir("./models")
+    if not exists('./models'):
+        mkdir('./models')
 
-    if not exists("./models/losses"):
-        mkdir("./models/losses")
-
-    csv_logger = CSVLogger(f"./models/losses/loss_{args.run_name}.csv")
-    model.fit(
-        train_generator,
-        batch_size=batch_size,
-        epochs=epochs,
-        validation_data=valid_generator,
-        callbacks=[stop, reduce_lr, csv_logger],
-        verbose=True,
-    )
-    model.save(f"./models/{args.run_name}.h5")
+    if not exists('./models/losses'):
+        mkdir('./models/losses')
+    
+    csv_logger = CSVLogger(f'./models/losses/loss_{args.run_name}.csv')
+    model.fit(train_generator, batch_size = batch_size, epochs = epochs, validation_data = valid_generator, callbacks = [stop, reduce_lr, csv_logger], verbose = True)
+    model.save(f'./models/{args.run_name}.h5')
