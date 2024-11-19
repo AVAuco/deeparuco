@@ -13,7 +13,7 @@ python demo.py <path to image> <output path>
 ```
 
 ## Pretrained models
-Demo code along with pretrained models will be available soon. 
+Demo code, pretrained models and dataset generation code are already available!
 Some example predictions:
 
 <p align = "center">
