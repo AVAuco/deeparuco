@@ -28,10 +28,16 @@ Some samples from the dataset:
 <img src='examples/flyingaruco_1.jpg' width='333'> <img src='examples/flyingaruco_2.jpg' width='333'> <img src='examples/flyingaruco_3.jpg' width='333'>
 </p>
 
-To build the dataset by yourself, you can use the ``build_dataset`` script. Please note that variations may occur due to the use of random operations. In order to better match our results, you can use the pre-generated datasets we provide through Zenodo.
+To build the dataset by yourself, you can use the ``build_dataset`` script. Please note that variations may occur due to the use of random operations. In order to better match our results, you can use the pre-generated datasets we provide through Zenodo. Please note that in our work we first filter the MS COCO images, rotate them as needed, and compute their brightness. To do so, run the ``filter_backgrounds`` script in the ``tools`` subdirectory:
 
 ```
-python build_dataset.py <source MSCOCO train2017 path> <target flyingarucov2 path> [options]
+python filter_backgrounds.py <source MSCOCO train2017 path> <filtered MSCOCO path>
+```
+
+And then run the ``build_dataset`` script on the filtered images:
+
+```
+python build_dataset.py <filtered MSCOCO path> <target flyingarucov2 path> [options]
 ```
 
 The script allows passing options to achieve multiple effects, such as merging markers with the background luma or using variable width for the marker borders. Please refer to the script documentation to learn more (passing the ``--help`` option to the script):
