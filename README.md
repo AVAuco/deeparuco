@@ -1,6 +1,7 @@
 # DeepArUco++: improved detection of square fiducial markers in challenging lighting conditions
 Support code for the DeepArUco++ method. Work by Rafael Berral-Soler, Rafael Muñoz-Salinas, Rafael Medina-Carnicer and Manuel J. Marín-Jiménez.
 
+* **NEW (01/04/2025)**: Due to the recent updates to Google Colab, the notebook is not currently functional. The source code in this repository is intended to be run using **Python 3.9**. The notebook is still available for download for local execution.
 * **NEW (08/11/2024)**: Fixed Colab demo.
 * **NEW (08/11/2024)**: Flying-ArUco v2 dataset available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14053985.svg)](https://doi.org/10.5281/zenodo.14053985). Dataset generation code added to this repository.
 * **NEW (07/03/2024)**: Shadow-ArUco dataset available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10791293.svg)](https://doi.org/10.5281/zenodo.10791293)
