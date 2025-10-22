@@ -74,6 +74,12 @@ if __name__ == "__main__":
 
     detections = detector(pic, verbose=False, iou=0.5, conf=0.03)[0].cpu().boxes
 
+    if not len(detections):
+        import sys
+        sys.exit("No detections")
+
+    print(f"MSG: {len(detections)} detections found.")
+
     # Expanded bboxes
 
     xyxy = [
@@ -138,13 +144,19 @@ if __name__ == "__main__":
         # Discard detections if less than 4 corners
 
         keep = [len(cs) == 4 for cs in corners]
-        xyxy, crops_ori, corners = zip(
-            *[
+
+        reorg = [
                 (det, crop, cs)
                 for det, crop, cs, k in zip(xyxy, crops_ori, corners, keep)
                 if k == True
             ]
-        )
+        if not len(reorg):
+            import sys
+            sys.exit("Corner refinement removed all detections.")
+
+        print(f"MSG: {len(keep)} detections kept after corner refinement.")
+
+        xyxy, crops_ori, corners = zip(*reorg)
 
     else:
         corners = [[(pred[i], pred[i + 1]) for i in range(0, 8, 2)] for pred in corners]
